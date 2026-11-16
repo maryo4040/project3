@@ -23,7 +23,7 @@ Tips:
 import random, socket, struct, sys, threading
 
 # ===================== CONFIG (EDIT YOUR PORT) =====================
-ASSIGNED_PORT = 30077  # <-- REPLACE with your assigned UDP port (from Canvas)
+ASSIGNED_PORT = 1739  # <-- REPLACE with your assigned UDP port (from Canvas)
 # ==================================================================
 
 # --- Flag bits (1 byte) ---
@@ -115,12 +115,17 @@ def main():
     last_close = None         # (addr, FIN-ACK packet) so a retransmitted FIN still gets answered
 
     while True:
-        pkt, addr = sock.recvfrom(2048)
+        try:
+            pkt, addr = sock.recvfrom(2048)
+        except ConnectionResetError as e:
+            if getattr(e, 'winerror', None) == 10054:
+                print('[SERVER] Ignoring Windows UDP connection reset')
+                continue
+            raise
         msg = unpack_msg(pkt)
         if msg is None:
             continue
         seq, ack, flags, pl = msg
-
         
         # ============ PHASE 1: HANDSHAKE (YOU IMPLEMENT) ============
 
